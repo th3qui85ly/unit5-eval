@@ -1,62 +1,81 @@
-import React from "react";
-import { AuthContext } from "../Contexts/AuthContext";
+import React, { useState } from "react";
+import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { login } from "../Redux/Action";
 
-export const Login = () => {
-    const { login, logout } = React.useContext(AuthContext);
-    const [formDetails, setFormDetails] = React.useState(
-        { 
-            username: "",
-            password: ""
-        }
-    );
+const Login = () => {
+  let LoginWrapper = styled.div`
+    text-align: center;
+    margin: 10px;
+  `;
+  let Input = styled.input`
+    margin: 10px 10px;
+    border-radius: 5px;
+    padding: 8px;
+    border: 1px solid #cecece;
+  `;
 
-    const handleChange = (e) => {
-       // console.log(e.target.value);
-        const { name, value } = e.target;
-       // console.log(name, value);
-        setFormDetails({
-            ...formDetails,
-            [name]: value
-        });
-    };
+  const [data, setData] = React.useState({
+    username: "",
+    password: "",
+  });
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        //console.log(formDetails);
-        fetch(`https://masai-api-mocker.herokuapp.com/auth/login`, {
-            method: "POST",
-            body: JSON.stringify(formDetails),
-            headers: { "content-type": "application/json" }
-        })
-        .then((res) => res.json())
-        .then((res) => login(res.token))
-        .catch((err) => console.log(err));
-    };
 
-    const { username, password } = formDetails;
-    return(
-        <form onSubmit={handleSubmit}>
-            <h1>Login Page</h1>
-            <input
-            name="username"
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={handleChange}
-            />
-            <br />
-            <input
-            name="password"
-            type="text"
-            placeholder="Password"
-            value={password}
-            onChange={handleChange}
-            />
-            <br />
-            <input
-            type="submit"
-            value="Login"
-            />
-        </form>
-    );
+  const dispatch = useDispatch();
+
+  const [token, setToken] = useState("");
+  console.log(token);
+  let handleChange = (e) => {
+    let { value, name } = e.target;
+
+    setData((oldData) => {
+      return {
+        ...oldData,
+        [name]: value,
+      };
+    });
+  };
+  const redirect = useNavigate();
+  function getRes() {
+    fetch(`https://masai-api-mocker.herokuapp.com/auth/login`, {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {
+        "content-type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        !res.error ? dispatch(login(res.token)) : alert("something is wrong");
+
+        !res.error && redirect("/");
+      });
+  }
+
+  return (
+    <LoginWrapper>
+      <Input
+        name="username"
+        type="text"
+        value={data.username}
+        placeholder="Username"
+        onChange={handleChange}
+      />
+      <br />
+      <Input
+        name="password"
+        type="password"
+        value={data.password}
+        placeholder="Password"
+        onChange={handleChange}
+      />
+      <br />
+      <button secondary onClick={getRes}>
+        Login
+      </button>
+    </LoginWrapper>
+  );
 };
+
+export default Login;
